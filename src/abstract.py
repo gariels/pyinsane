@@ -172,6 +172,17 @@ class Scan(object):
             rawapi.sane_cancel(sane_dev_handle[1])
             raise
 
+    def _on_read_eof(self):
+        line_size = self.parameters.bytes_per_line
+        for line in self.__raw_lines:
+            if len(line) != line_size:
+                print ("Pyinsane: Warning: Unexpected line size: %d instead of %d" %
+                       (len(line), line_size))
+
+        lines = self._get_available_lines()
+        img = self.get_image(*lines)
+        self.__session.images.append(img)
+
     def read(self):
         if self.__img_finished:
             # start a new one
@@ -181,17 +192,10 @@ class Scan(object):
         try:
             read = rawapi.sane_read(sane_dev_handle[1], SANE_READ_BUFSIZE)
         except EOFError:
-            line_size = self.parameters.bytes_per_line
-            for line in self.__raw_lines:
-                if len(line) != line_size:
-                    print ("Pyinsane: Warning: Unexpected line size: %d instead of %d" %
-                           (len(line), line_size))
-            raw = (b'').join(self.__raw_lines)
             # don't do purge the lines here. wait for the next call to read()
             # because, in the meantime, the caller might use get_image()
             self.__img_finished = True
-            self.__session.images.append(ImgUtil.raw_to_img(
-                    raw, self.parameters))
+            self._on_read_eof()
             raise
 
         if self.parameters.depth == 1:
@@ -221,7 +225,7 @@ class Scan(object):
         line_size = self.parameters.bytes_per_line
         r = len(self.__raw_lines)
         if (r > 0 and len(self.__raw_lines[-1]) < line_size):
-            r -= 1;
+            r -= 1
         return (0, r)
 
     available_lines = property(_get_available_lines)
