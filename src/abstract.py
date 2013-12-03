@@ -210,16 +210,9 @@ class Scan(object):
             self.__raw_lines[-1] += read[:cut]
             read = read[cut:]
 
-        range_func = range
-        if sys.version_info.major < 3:
-            range_func = xrange
-
-        for _ in range_func(0, len(read), line_size):
+        while read:
             self.__raw_lines.append(read[:line_size])
             read = read[line_size:]
-
-        if len(read) > 0:
-            self.__raw_lines.append(read)
 
     def _get_available_lines(self):
         line_size = self.parameters.bytes_per_line
