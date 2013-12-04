@@ -183,6 +183,11 @@ class Scan(object):
         img = self.get_image(*lines)
         self.__session.images.append(img)
 
+    def _on_line_available(self, lineidx):
+        # called everytime a line is available. subclass could use this to do
+        # line-by-line processing (eg. streaming) just as they acquired
+        pass
+
     def read(self):
         if self.__img_finished:
             # start a new one
@@ -206,13 +211,20 @@ class Scan(object):
         line_size = self.parameters.bytes_per_line
 
         if (len(self.__raw_lines) > 0):
-            cut = line_size - len(self.__raw_lines[-1])
-            self.__raw_lines[-1] += read[:cut]
-            read = read[cut:]
+            if len(self.__raw_lines[-1]) < line_size:
+                cut = line_size - len(self.__raw_lines[-1])
+                self.__raw_lines[-1] += read[:cut]
+                read = read[cut:]
+
+                if len(self.__raw_lines[-1]) == line_size:
+                    self._on_line_available(len(self.__raw_lines) - 1)
 
         while read:
             self.__raw_lines.append(read[:line_size])
             read = read[line_size:]
+
+            if len(self.__raw_lines[-1]) == line_size:
+                self._on_line_available(len(self.__raw_lines) - 1)
 
     def _get_available_lines(self):
         line_size = self.parameters.bytes_per_line
