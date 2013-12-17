@@ -1,5 +1,3 @@
-import sys
-
 from PIL import Image
 
 from . import rawapi
@@ -30,7 +28,7 @@ __all__ = [
 ]
 
 # We use huge buffers to spend the maximum amount of time in non-Python code
-SANE_READ_BUFSIZE = 512*1024
+SANE_READ_BUFSIZE = 512 * 1024
 
 sane_is_init = 0
 sane_version = None
@@ -113,17 +111,17 @@ class ScannerOption(object):
 
 class ImgUtil(object):
     COLOR_BYTES = {
-        1 : {  # we expanded the bits to bytes on-the-fly
-            "L" : 1,
-            "RGB" : 3,
+        1: {  # we expanded the bits to bytes on-the-fly
+            "L": 1,
+            "RGB": 3,
         },
-        8 : {
-            "L" : 1,
-            "RGB" : 3,
+        8: {
+            "L": 1,
+            "RGB": 3,
         },
-        16 : {
-            "L" : 2,
-            "RGB" : 6
+        16: {
+            "L": 2,
+            "RGB": 6
         }
     }
 
@@ -136,7 +134,7 @@ class ImgUtil(object):
         for byte in raw_packed:
             byte = ord(byte)
             for bit in range(7, -1, -1):
-                if ((byte & (1<<bit)) > 0):
+                if ((byte & (1 << bit)) > 0):
                     raw_unpacked += (chr(0x00))
                 else:
                     raw_unpacked += (chr(0xFF))
@@ -406,7 +404,7 @@ class Scanner(object):
     def _force_close(self):
         global sane_dev_handle
         (devid, handle) = sane_dev_handle
-        if handle == None:
+        if handle is None:
             return
         rawapi.sane_close(handle)
         sane_exit()
@@ -419,7 +417,7 @@ class Scanner(object):
         self._del()
 
     def __load_options(self):
-        if self.__options != None:
+        if self.__options is not None:
             return
         self._open()
         nb_options = rawapi.sane_get_option_value(sane_dev_handle[1], 0)
@@ -462,4 +460,3 @@ def get_devices(local_only=False):
                 for device in rawapi.sane_get_devices(local_only)]
     finally:
         sane_exit()
-
